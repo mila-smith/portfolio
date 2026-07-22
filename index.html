@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Miliyion Addisu Belay - Professional Web Portfolio & AI Agent Hub</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <!-- Babel for JSX compilation -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .serif-font {
+            font-family: 'Playfair Display', serif;
+        }
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background: white !important;
+                color: black !important;
+            }
+            .print-page {
+                box-shadow: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                border: none !important;
+            }
+        }
+        /* Custom scrollbar for preview */
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 3px;
+        }
+        /* Glow animations */
+        .glow-hover:hover {
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen">
+
+<div id="root"></div>
+
+<script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    const GALLERY_PHOTOS = [
+        { id: 'suit-sitting', src: 'photo_2026-07-16_08-42-35.jpg', label: 'Executive Suit (Sitting)', category: 'Executive' },
+        { id: 'suit-standing', src: 'photo_2026-07-16_08-42-31.jpg', label: 'Executive Suit (Standing)', category: 'Executive' },
+        { id: 'suit-profile', src: 'photo_2026-07-16_08-42-49.jpg', label: 'Executive Suit (Profile)', category: 'Executive' },
+        { id: 'passport', src: 'photo_2026-07-16_08-43-06.jpg', label: 'Standard Passport Photo', category: 'Official' },
+        { id: 'grad-cert', src: 'photo_2026-07-16_08-43-01.jpg', label: 'Graduation Portrait (Front)', category: 'Graduation' },
+        { id: 'grad-sitting', src: 'photo_2026-07-16_08-42-55.jpg', label: 'Graduation (Yellow Ribbon)', category: 'Graduation' },
+        { id: 'grad-monochrome', src: 'photo_2026-07-16_08-42-59.jpg', label: 'Graduation (Monochrome Tint)', category: 'Graduation' },
+        { id: 'grad-casual', src: 'photo_2026-07-16_08-42-43.jpg', label: 'Graduation (Casual Shades)', category: 'Graduation' },
+        { id: 'suit-shades', src: 'photo_2026-07-16_08-42-27.jpg', label: 'Executive Suit (Sunglasses)', category: 'Casual' },
+    ];
+
+    function App() {
+        // Navigation Web Tabs
+        const [activeTab, setActiveTab] = useState('home'); // 'home' | 'cv' | 'ai-chat' | 'credentials' | 'gallery'
+
+        // Layout & Visual States for CV
+        const [layout, setLayout] = useState('executive'); // 'executive' | 'modern'
+        const [primaryColor, setPrimaryColor] = useState('indigo'); 
+        const [selectedPhoto, setSelectedPhoto] = useState('photo_2026-07-16_08-42-35.jpg'); 
+        const [customPhoto, setCustomPhoto] = useState(null);
+        const [isEditing, setIsEditing] = useState(false);
+
+        // Gemini AI Panel States
+        const [showAiPanel, setShowAiPanel] = useState(false);
+        const [userApiKey, setUserApiKey] = useState(''); 
+        const [targetJobTitle, setTargetJobTitle] = useState('IT Network Specialist');
+        const [targetJobDesc, setTargetJobDesc] = useState('Looking for an IT Professional with a strong background in hardware diagnostics, Windows Server, basic network infrastructure setup, troubleshooting, and excellent communication skills.');
+        const [aiTab, setAiTab] = useState('tailor'); // 'tailor' | 'coverletter' | 'interview'
+        
+        // AI Outputs
+        const [aiLoading, setAiLoading] = useState(false);
+        const [aiError, setAiError] = useState('');
+        const [generatedCoverLetter, setGeneratedCoverLetter] = useState('');
+        const [interviewPrep, setInterviewPrep] = useState('');
+        const [tailorSuccessMsg, setTailorSuccessMsg] = useState('');
+
+        // Recruiter Chatbot States
+        const [chatMessages, setChatMessages] = useState([
+            { sender: 'ai', text: "Hello! I am Miliyion's AI Representative. You can ask me anything about his qualifications, TVET Level 1-5 credentials, exit exam achievements, or technical history at the Driver & Vehicle Licensing Authority!" }
+        ]);
+        const [chatInput, setChatInput] = useState('');
+        const [chatLoading, setChatLoading] = useState(false);
+        const chatEndRef = useRef(null);
+
+        // Toast Messages
+        const [toastMessage, setToastMessage] = useState('');
+
+        // CV Content State
+        const [profile, setProfile] = useState({
+            name: "Miliyion Addisu Belay",
+            title: "Computer Science Graduate & IT Specialist",
+            summary: "Highly skilled and dedicated Computer Science graduate with a strong foundation in Hardware Engineering, Network Administration, and Systems Support. Proven track record of managing technology infrastructure, resolving complex technical challenges, and delivering high-quality IT service management. Commended for academic excellence, with an MoE Exit Exam score of 76% and a solid GPA, supplemented by extensive certified training in cyber security, system maintenance, and software development.",
+            email: "miliyonaddisu93@gmail.com",
+            phone1: "+251 904 577 741",
+            phone2: "+251 901 234 623",
+            location: "Addis Ababa, Ethiopia",
+            nationality: "Ethiopian",
+            birthDate: "June 23, 1996 (G.C.)",
+            maritalStatus: "Single",
+            drivingLicense: "Valid Vehicle Driving License (Manual and Automatic transmission)",
+            languages: ["Amharic (Native - Excellent)", "English (Professional - Excellent)"],
+            interests: "Academic Journals, Emerging Technologies Research, Open Source Projects",
+            education: [
+                { period: "2019 - 2024 G.C.", degree: "Bachelor of Science in Computer Science", institution: "Microlink Information Technology College", details: "GPA: 3.04 | Earned 76% on the Federal Democratic Republic of Ethiopia Ministry of Education National University Exit Exam" },
+                { period: "2017 - 2019 G.C.", degree: "Level 4 & Level 5 Certifications", institution: "Entoto TVET College", details: "Specialization in Hardware, Networking, and Information Technology Service Management" },
+                { period: "2014 - 2016 G.C.", degree: "Level 3 Certification", institution: "Entoto TVET College", details: "Information Technology Support & Hardware Services" },
+                { period: "2012 - 2013 G.C.", degree: "Grade 9 - 10 Secondary Education", institution: "K.D. Selam Secondary School", details: "General High School Education" },
+                { period: "2003 - 2011 G.C.", degree: "Grade 1 - 8 Primary Education", institution: "Addis Birhan Primary School", details: "General Elementary Education" }
+            ],
+            qualifications: [
+                "National Qualification Certificate in IT Service Management (Level 5)",
+                "National Qualification Certificate in Hardware & Networking Service (Level 4)",
+                "National Qualification Certificate in Hardware & Networking Service (Level 3)",
+                "National Qualification Certificate in IT Support Service (Level 2)",
+                "National Qualification Certificate in IT Support Service (Level 1)",
+                "FDRE Ministry of Education University Exit Exam Result: 76%"
+            ],
+            experience: [
+                {
+                    period: "01/07/2012 E.C. - Present",
+                    role: "IT Technical Specialist / Support Officer",
+                    org: "Addis Ababa City Government Driver and Vehicles Licensing and Control Authority",
+                    desc: "Managing network configuration, hardware troubleshooting, operating system deployment, and digital driver database management. Delivering optimal tech support across departments to keep critical vehicle controls running securely and efficiently."
+                },
+                {
+                    period: "16/07/2011 - 30/06/2012 E.C.",
+                    role: "Technical Support Associate",
+                    org: "City Government of Addis Ababa Driver & Vehicle License & Control (Gulele Branch Office)",
+                    desc: "Handled branch-level system updates, hardware diagnostic services, local network troubleshooting, and vehicle database backups."
+                },
+                {
+                    period: "01/10/2009 - 30/09/2010 E.C.",
+                    role: "Technical Assistant & Data Operator",
+                    org: "Federal Republic of Ethiopia Ministry of Education (National Educational Assessment & Examination Agency)",
+                    desc: "Contributed to database entry operations, national examination scanning validation systems, hardware status checks, and data consistency reviews."
+                },
+                {
+                    period: "01/10/2008 - 08/01/2009 E.C.",
+                    role: "IT Support Assistant (Project-based)",
+                    org: "Ministry of Education National Educational Assessment & Examination Agency",
+                    desc: "Assisted in setting up servers and computer networks for large-scale national data processing cycles."
+                },
+                {
+                    period: "01/10/2007 - 30/12/2007 E.C.",
+                    role: "Junior IT Support Assistant",
+                    org: "Ministry of Education National Educational Assessment & Examination Agency",
+                    desc: "Provided basic computer hardware diagnostics, printer diagnostics, and network patching support."
+                }
+            ],
+            trainings: [
+                { title: "Master English Certification", provider: "Global Language Assessment" },
+                { title: "Code Yourself! An Introduction to Programming", provider: "University of Edinburgh (Verified Online Certificate)" },
+                { title: "Mobile & Smart Phones Maintenance (Hardware & Software)", provider: "Satcom Institute of Technology" },
+                { title: "Office Machines Maintenance Specialist", provider: "Satcom Institute of Technology" },
+                { title: "Introduction to Capital Markets & Finance", provider: "FreeStock Market & Financial Education" },
+                { title: "Governmental 5 Million Coders Program", provider: "Specialized credentials in Android Development, Programming Fundamentals, AI Foundations, and Data Analysis" },
+                { title: "Digital Marketing Fundamentals for Business", provider: "Awaqi Professional Platform" },
+                { title: "Getting Started with Cisco Packet Tracer", provider: "Cisco Networking Academy (Verified Badge)" },
+                { title: "Introduction to Cyber Security", provider: "Cisco Networking Academy (Verified Badge & Certificate)" }
+            ],
+            credentials: [
+                { label: "Verify: Udacity - Professional AI Fundamentals", url: "https://www.udacity.com/certificate/e/50b85614-63a5-11f0-beb0-df2c3386bdfe" },
+                { label: "Verify: Udacity - Data Analyst Professional", url: "https://www.udacity.com/certificate/e/de7364b8-4c62-11ef-b182-178504c58af8" },
+                { label: "Verify: Udacity - Android Developer Professional", url: "https://www.udacity.com/certificate/e/9bfc6a1e-5e8e-11f0-bc00-df552f8b8b9c" },
+                { label: "Verify: Udacity - Programming Professional", url: "https://www.udacity.com/certificate/e/971c3a1c-6076-11f0-8473-8347d5ac0e0c" },
+                { label: "Verify: Credly Badge Portfolio", url: "https://www.credly.com/badges/727ae14e-3e74-467d-968f-51bbc4fdac53" },
+                { label: "Verify: Coursera Programming Certificate", url: "https://coursera.org/verify/KZBEUB8HB6V7" },
+                { label: "Capital Market Education Profile", url: "https://www.stockmarket.et/biritu/wp-content/uploads/2026/07/135_1033.pdf" }
+            ]
+        });
+
+        // Color theme setups
+        const colorClasses = {
+            indigo: { primary: 'bg-indigo-600', text: 'text-indigo-600', border: 'border-indigo-600', hover: 'hover:bg-indigo-700', bgLight: 'bg-indigo-50', gradient: 'from-indigo-600 to-violet-600' },
+            emerald: { primary: 'bg-emerald-600', text: 'text-emerald-600', border: 'border-emerald-600', hover: 'hover:bg-emerald-700', bgLight: 'bg-emerald-50', gradient: 'from-emerald-600 to-teal-600' },
+            slate: { primary: 'bg-slate-800', text: 'text-slate-800', border: 'border-slate-800', hover: 'hover:bg-slate-900', bgLight: 'bg-slate-100', gradient: 'from-slate-700 to-slate-900' },
+            rose: { primary: 'bg-rose-600', text: 'text-rose-600', border: 'border-rose-600', hover: 'hover:bg-rose-700', bgLight: 'bg-rose-50', gradient: 'from-rose-600 to-pink-600' }
+        };
+
+        const activeColors = colorClasses[primaryColor];
+
+        // Scroll chat to bottom
+        useEffect(() => {
+            chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, [chatMessages, chatLoading]);
+
+        const showToast = (msg) => {
+            setToastMessage(msg);
+            setTimeout(() => setToastMessage(''), 3000);
+        };
+
+        // File upload handler
+        const handleFileUpload = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    setCustomPhoto(reader.result);
+                    setSelectedPhoto(null);
+                    showToast("Custom photo uploaded successfully!");
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+
+        const currentPhotoSrc = customPhoto || selectedPhoto;
+
+        // Custom call to Gemini
+        const callGeminiApi = async (systemInstruction, promptText) => {
+            const apiKey = userApiKey || ""; 
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+            
+            const payload = {
+                contents: [{ parts: [{ text: promptText }] }],
+                systemInstruction: {
+                    parts: [{ text: systemInstruction }]
+                }
+            };
+
+            const fetchWithBackoff = async (retries = 3, delay = 1000) => {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    if (!response.ok) {
+                        if (response.status === 429 && retries > 0) {
+                            await new Promise(resolve => setTimeout(resolve, delay));
+                            return fetchWithBackoff(retries - 1, delay * 2);
+                        }
+                        throw new Error(`HTTP Error ${response.status}: ${response.statusText}`);
+                    }
+                    return await response.json();
+                } catch (err) {
+                    if (retries > 0) {
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        return fetchWithBackoff(retries - 1, delay * 2);
+                    }
+                    throw err;
+                }
+            };
+
+            try {
+                const result = await fetchWithBackoff();
+                return result.candidates?.[0]?.content?.parts?.[0]?.text;
+            } catch (err) {
+                console.error("Gemini connection error:", err);
+                throw err;
+            }
+        };
+
+        const handleSendChatMessage = async (e) => {
+            if (e) e.preventDefault();
+            if (!chatInput.trim()) return;
+
+            const userText = chatInput;
+            setChatMessages(prev => [...prev, { sender: 'user', text: userText }]);
+            setChatInput('');
+            setChatLoading(true);
+
+            const systemInstruction = `
+                You are Miliyion Addisu Belay's Professional AI Representative/Avatar. Your tone must be formal, enthusiastic, articulate, and completely aligned with the candidate's verified profile data.
+                
+                You have access to the complete facts of Miliyion's background:
+                - Name: Miliyion Addisu Belay
+                - Contact: +251 904 577 741 / +251 901 234 623 | miliyonaddisu93@gmail.com
+                - Degree: Bachelor of Science in Computer Science from Microlink Information Technology College (GPA: 3.04, Exit Exam score: 76% from FDRE MoE).
+                - TVET Certifications: Level 1 to 5 from Entoto TVET College in IT Support, Hardware & Networking, and IT Service Management.
+                - Professional History: IT Technical Specialist / Support Officer at Addis Ababa City Government Driver and Vehicles Licensing and Control Authority (2012 E.C. - Present). Handled networks, backups, diagnostics, and digital driver registries.
+                - Project Experience: Expert setups of Cisco Packet Tracer, cyber security practices, system administration.
+                - Specialized training: Android development, programming fundamentals, AI foundations, and data analysis via Udacity certificates and the Governmental 5 Million Coders initiative.
+                - Driving: Valid Manual & Automatic vehicle driving license.
+                
+                Rules:
+                1. Only answer queries using the facts provided above. Do not invent non-existent projects or fake degrees.
+                2. Answer questions warmly but professionally, as a prime applicant for enterprise, networking, systems, or IT positions.
+                3. Keep your replies concise (under 120 words unless requested otherwise).
+            `;
+
+            try {
+                const aiReply = await callGeminiApi(systemInstruction, userText);
+                if (aiReply) {
+                    setChatMessages(prev => [...prev, { sender: 'ai', text: aiReply }]);
+                } else {
+                    setChatMessages(prev => [...prev, { sender: 'ai', text: "I apologize, I'm experiencing temporary trouble accessing my data systems. Please ask again!" }]);
+                }
+            } catch (err) {
+                setChatMessages(prev => [...prev, { sender: 'ai', text: `Connection issue: ${err.message}. Please verify your network connection.` }]);
+            } finally {
+                setChatLoading(false);
+            }
+        };
+
+        const handleAiTailorProfile = async () => {
+            setAiLoading(true);
+            setAiError('');
+            const system = "You are an elite IT Career Strategist. Rewrite a professional summary to match a target job role. Always write summaries that preserve Miliyion's core metrics (Exit Exam 76%, Computer Science degree, TVET Levels 1-5, and driver database administration) but shift keyword alignment. Do not invent fake skills. Avoid generic filler. Target length: ~120 words.";
+            const prompt = `
+                Target Job: ${targetJobTitle}
+                Target Description: ${targetJobDesc}
+                Current Summary: "${profile.summary}"
+                Candidate Profile: ${JSON.stringify(profile)}
+            `;
+
+            try {
+                const optimizedSummary = await callGeminiApi(system, prompt);
+                if (optimizedSummary) {
+                    setProfile(prev => ({ ...prev, summary: optimizedSummary.trim() }));
+                    setTailorSuccessMsg("Profile summary tailored perfectly to: " + targetJobTitle);
+                    setTimeout(() => setTailorSuccessMsg(""), 4000);
+                }
+            } catch (err) {
+                setAiError(err.message);
+            } finally {
+                setAiLoading(false);
+            }
+        };
+
+        const handleAiGenerateCoverLetter = async () => {
+            setAiLoading(true);
+            setAiError('');
+            const system = "You are a master recruiter. Write a customized, modern cover letter based entirely on the candidate's real profile stats (CS Degree, 76% Exit Exam, Driver & Vehicle Authority IT Officer experience). Present a high-converting format.";
+            const prompt = `
+                Target Job: ${targetJobTitle}
+                Job Specs: ${targetJobDesc}
+                Candidate Details: ${JSON.stringify(profile)}
+            `;
+
+            try {
+                const letter = await callGeminiApi(system, prompt);
+                if (letter) {
+                    setGeneratedCoverLetter(letter);
+                }
+            } catch (err) {
+                setAiError(err.message);
+            } finally {
+                setAiLoading(false);
+            }
+        };
+
+        const handleAiGenerateInterviewPrep = async () => {
+            setAiLoading(true);
+            setAiError('');
+            const system = "You are a lead technical interviewer evaluating IT network specialists, software engineer applicants, and system administrators.";
+            const prompt = `
+                Target Job: ${targetJobTitle}
+                Target Description: ${targetJobDesc}
+                Candidate background: ${JSON.stringify(profile)}
+            `;
+
+            try {
+                const prepContent = await callGeminiApi(system, prompt);
+                if (prepContent) {
+                    setInterviewPrep(prepContent);
+                }
+            } catch (err) {
+                setAiError(err.message);
+            } finally {
+                setAiLoading(false);
+            }
+        };
+
+        return (
+            <div className="min-h-screen flex flex-col justify-between">
+                
+                {/* Global Toast */}
+                {toastMessage && (
+                    <div className="fixed top-4 right-4 z-50 bg-slate-900 text-white text-xs font-semibold px-4 py-2.5 rounded-lg shadow-lg flex items-center gap-2 animate-bounce">
+                        <span>✨</span>
+                        <span>{toastMessage}</span>
+                    </div>
+                )}
+
+                {/* Top Nav Header */}
+                <header className="bg-slate-950 text-white shadow-xl sticky top-0 z-40 no-print border-b border-slate-800">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-500 to-violet-500 flex items-center justify-center text-white font-black text-sm">
+                                MB
+                            </div>
+                            <div>
+                                <h1 className="text-sm font-extrabold tracking-wide uppercase">Miliyion Addisu Belay</h1>
+                                <p className="text-[10px] text-slate-400 font-medium">BSc Computer Science • IT Specialist</p>
+                            </div>
+                        </div>
+
+                        {/* Navigation Menu */}
+                        <nav className="flex flex-wrap items-center justify-center gap-1.5 bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs">
+                            <button 
+                                onClick={() => setActiveTab('home')}
+                                className={`px-3 py-1.5 rounded-lg font-semibold transition ${activeTab === 'home' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+                            >
+                                Portfolio Home
+                            </button>
+                            <button 
+                                onClick={() => setActiveTab('cv')}
+                                className={`px-3 py-1.5 rounded-lg font-semibold transition ${activeTab === 'cv' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+                            >
+                                Interactive CV Customizer
+                            </button>
+                            <button 
+                                onClick={() => setActiveTab('ai-chat')}
+                                className={`px-3 py-1.5 rounded-lg font-semibold transition ${activeTab === 'ai-chat' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+                            >
+                                Recruiter AI Chat Agent
+                            </button>
+                            <button 
+                                onClick={() => setActiveTab('credentials')}
+                                className={`px-3 py-1.5 rounded-lg font-semibold transition ${activeTab === 'credentials' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+                            >
+                                Verified Credentials
+                            </button>
+                            <button 
+                                onClick={() => setActiveTab('gallery')}
+                                className={`px-3 py-1.5 rounded-lg font-semibold transition ${activeTab === 'gallery' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+                            >
+                                Photo Studio
+                            </button>
+                        </nav>
+
+                        {/* Action buttons */}
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => window.print()}
+                                className="bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition border border-slate-700 flex items-center gap-1.5"
+                            >
+                                🖨️ Quick PDF Print
+                            </button>
+                        </div>
+                    </div>
+                </header>
+
+                {/* Primary Workspace */}
+                <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+                    
+                    {}
+                    {activeTab === 'home' && (
+                        <div className="space-y-12 animate-fadeIn">
+                            {/* Hero Presentation */}
+                            <div className="bg-white rounded-3xl p-8 md:p-12 border border-slate-200/80 shadow-sm flex flex-col md:flex-row items-center gap-8 md:gap-12 relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50 rounded-full filter blur-3xl opacity-60 -mr-16 -mt-16"></div>
+                                
+                                {/* Photo Container */}
+                                <div className="relative w-48 h-60 md:w-56 md:h-72 rounded-2xl overflow-hidden shadow-xl flex-shrink-0 border-4 border-white bg-slate-100">
+                                    <img 
+                                        src={currentPhotoSrc} 
+                                        alt={profile.name} 
+                                        className="w-full h-full object-cover"
+                                    />
+                                    <div className="absolute inset-x-0 bottom-0 bg-slate-900/80 backdrop-blur-sm p-2 text-center text-[10px] text-white font-bold">
+                                        Current Active Portrait
+                                    </div>
+                                </div>
+
+                                {/* Summary */}
+                                <div className="flex-grow space-y-5 text-center md:text-left relative z-10">
+                                    <div className="inline-flex items-center gap-1.5 bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                                        🚀 MoE exit exam result: 76%
+                                    </div>
+                                    <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-slate-900 serif-font">
+                                        Hello, I'm <span className="text-indigo-600 block sm:inline">{profile.name}</span>
+                                    </h1>
+                                    <p className="text-base text-slate-600 font-semibold max-w-2xl leading-relaxed">
+                                        {profile.title}
+                                    </p>
+                                    <p className="text-sm text-slate-500 max-w-3xl leading-relaxed">
+                                        {profile.summary}
+                                    </p>
+
+                                    {/* Core highlights */}
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2">
+                                        <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                            <span className="block text-xs text-slate-400 uppercase font-bold tracking-wider">Education</span>
+                                            <span className="text-xs font-extrabold text-slate-800">BSc Computer Science</span>
+                                        </div>
+                                        <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                            <span className="block text-xs text-slate-400 uppercase font-bold tracking-wider">Experience</span>
+                                            <span className="text-xs font-extrabold text-slate-800">IT Technical Specialist</span>
+                                        </div>
+                                        <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                            <span className="block text-xs text-slate-400 uppercase font-bold tracking-wider">Location</span>
+                                            <span className="text-xs font-extrabold text-slate-800">Addis Ababa, Ethiopia</span>
+                                        </div>
+                                        <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                            <span className="block text-xs text-slate-400 uppercase font-bold tracking-wider">Verified Badges</span>
+                                            <span className="text-xs font-extrabold text-indigo-600">Udacity & Cisco</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Action row */}
+                                    <div className="flex flex-wrap gap-3 justify-center md:justify-start pt-2">
+                                        <button 
+                                            onClick={() => setActiveTab('cv')}
+                                            className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold px-5 py-3 rounded-xl shadow-md transition"
+                                        >
+                                            💼 Design & Print Resume
+                                        </button>
+                                        <button 
+                                            onClick={() => setActiveTab('ai-chat')}
+                                            className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-extrabold px-5 py-3 rounded-xl shadow-md transition flex items-center gap-2"
+                                        >
+                                            ✨ Interview My AI Agent
+                                        </button>
+                                        <a 
+                                            href="mailto:miliyonaddisu93@gmail.com"
+                                            className="bg-white hover:bg-slate-50 text-slate-800 text-xs font-extrabold px-5 py-3 rounded-xl shadow-sm border border-slate-200 transition"
+                                        >
+                                            📧 Contact directly
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Skills Showcase */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+                                    <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg">
+                                        🔧
+                                    </div>
+                                    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest">Systems & Hardware Support</h3>
+                                    <p className="text-xs text-slate-500 leading-relaxed">
+                                        Specialized in diagnosing system logic errors, hardware malfunctions, setting up server terminals, printing arrays, and executing robust preventative maintenance schedules.
+                                    </p>
+                                    <ul className="text-xs text-slate-600 space-y-1 font-medium">
+                                        <li>• Entoto TVET Level 1-5 certified</li>
+                                        <li>• Driver and Vehicle Authority Infrastructure management</li>
+                                        <li>• Satcom Mobile & Smartphone diagnostics</li>
+                                    </ul>
+                                </div>
+
+                                <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+                                    <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg">
+                                        🌐
+                                    </div>
+                                    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest">Network Architecture</h3>
+                                    <p className="text-xs text-slate-500 leading-relaxed">
+                                        Experienced in configuring routing, local area networks, patching support setups, and executing secure, isolated environment simulations.
+                                    </p>
+                                    <ul className="text-xs text-slate-600 space-y-1 font-medium">
+                                        <li>• Cisco Packet Tracer badge verification</li>
+                                        <li>• Cisco Introduction to Cyber Security Badge</li>
+                                        <li>• Entoto TVET Hardware & Networking Specialists level 4</li>
+                                    </ul>
+                                </div>
+
+                                <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+                                    <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg">
+                                        💻
+                                    </div>
+                                    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest">AI & Data Analytics Foundations</h3>
+                                    <p className="text-xs text-slate-500 leading-relaxed">
+                                        Equipped with modern programming architectures, verified credentials in Python, AI frameworks, and business logic execution.
+                                    </p>
+                                    <ul className="text-xs text-slate-600 space-y-1 font-medium">
+                                        <li>• Udacity verified credential holders</li>
+                                        <li>• Edinburgh programming fundamentals badge</li>
+                                        <li>• Government 5 Million Coders credentials</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {}
+                    {activeTab === 'cv' && (
+                        <div className="space-y-6">
+                            {/* CV Config toolbar */}
+                            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 flex flex-wrap gap-4 items-center justify-between no-print">
+                                <div>
+                                    <h2 className="text-sm font-extrabold text-slate-900">Custom Resume Studio</h2>
+                                    <p className="text-[10px] text-slate-500 mt-0.5">Toggle styles, activate on-the-page live edits, and print to PDF format directly.</p>
+                                </div>
+
+                                <div className="flex flex-wrap gap-3 items-center">
+                                    {/* Layout selectors */}
+                                    <div className="flex bg-slate-100 rounded-lg p-1 text-xs">
+                                        <button 
+                                            onClick={() => setLayout('executive')}
+                                            className={`px-3 py-1 rounded-md font-bold transition ${layout === 'executive' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'}`}
+                                        >
+                                            Executive Split
+                                        </button>
+                                        <button 
+                                            onClick={() => setLayout('modern')}
+                                            className={`px-3 py-1 rounded-md font-bold transition ${layout === 'modern' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'}`}
+                                        >
+                                            Modern Minimalist
+                                        </button>
+                                    </div>
+
+                                    {/* Color palette selectors */}
+                                    <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
+                                        {Object.keys(colorClasses).map((col) => (
+                                            <button 
+                                                key={col}
+                                                onClick={() => setPrimaryColor(col)}
+                                                className={`w-5 h-5 rounded-full border transition ${primaryColor === col ? 'border-slate-800 scale-110' : 'border-transparent'} ${col === 'indigo' ? 'bg-indigo-600' : col === 'emerald' ? 'bg-emerald-600' : col === 'slate' ? 'bg-slate-700' : 'bg-rose-600'}`}
+                                            />
+                                        ))}
+                                    </div>
+
+                                    {/* Live editing togglers */}
+                                    <button 
+                                        onClick={() => {
+                                            setIsEditing(!isEditing);
+                                            showToast(isEditing ? "Changes saved locally!" : "Live editing mode active! Click any section on the CV to edit.");
+                                        }}
+                                        className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border transition ${isEditing ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'}`}
+                                    >
+                                        {isEditing ? '💾 Lock Changes' : '📝 Live Edit'}
+                                    </button>
+
+                                    {/* AI helper launcher */}
+                                    <button 
+                                        onClick={() => setShowAiPanel(!showAiPanel)}
+                                        className="bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg transition"
+                                    >
+                                        ✨ Gemini Copilot Panel
+                                    </button>
+
+                                    {/* PDF executioner */}
+                                    <button 
+                                        onClick={() => window.print()}
+                                        className="bg-slate-900 hover:bg-slate-800 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg transition"
+                                    >
+                                        🖨️ Export PDF
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Main workspace splits: AI Sidebar + CV Document canvas */}
+                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start relative">
+                                
+                                {/* Slidout/Sidepanel with Gemini integration */}
+                                {showAiPanel && (
+                                    <div className="lg:col-span-4 bg-slate-900 text-white rounded-2xl p-5 shadow-xl border border-slate-800 no-print sticky top-20 space-y-4">
+                                        <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-lg">✨</span>
+                                                <div>
+                                                    <h3 className="font-bold text-xs text-indigo-400">Gemini CV Optimizer</h3>
+                                                    <p className="text-[9px] text-slate-400">Tailor with gemini-3-flash-preview</p>
+                                                </div>
+                                            </div>
+                                            <button 
+                                                onClick={() => setShowAiPanel(false)}
+                                                className="text-slate-400 hover:text-white text-xs bg-slate-800 hover:bg-slate-700 px-2 py-1 rounded"
+                                            >
+                                                ✕
+                                            </button>
+                                        </div>
+
+                                        {/* Optional custom API Key override */}
+                                        <div className="bg-slate-800/40 p-3 rounded-lg border border-slate-700/60 space-y-1.5">
+                                            <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Gemini API Key (Optional)</label>
+                                            <input 
+                                                type="password"
+                                                value={userApiKey}
+                                                onChange={(e) => setUserApiKey(e.target.value)}
+                                                placeholder="Using standard platform gateway"
+                                                className="w-full bg-slate-950 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-indigo-300 focus:outline-none focus:border-indigo-500"
+                                            />
+                                        </div>
+
+                                        {/* Targeting controls */}
+                                        <div className="space-y-2.5 bg-slate-950 p-3 rounded-xl border border-slate-800">
+                                            <h4 className="text-[10px] font-bold text-slate-300 uppercase tracking-widest border-b border-slate-800 pb-1">Application Targets</h4>
+                                            <div>
+                                                <label className="block text-[9px] text-slate-400 mb-0.5">Target Title</label>
+                                                <input 
+                                                    value={targetJobTitle}
+                                                    onChange={(e) => setTargetJobTitle(e.target.value)}
+                                                    className="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1 text-xs text-white"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-[9px] text-slate-400 mb-0.5">Job Specifications</label>
+                                                <textarea 
+                                                    rows="2"
+                                                    value={targetJobDesc}
+                                                    onChange={(e) => setTargetJobDesc(e.target.value)}
+                                                    className="w-full bg-slate-900 border border-slate-700 rounded p-1.5 text-xs text-white resize-none"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Menu selections */}
+                                        <div className="flex border-b border-slate-800 text-[11px] font-bold">
+                                            <button 
+                                                onClick={() => setAiTab('tailor')}
+                                                className={`flex-1 pb-2 border-b-2 transition ${aiTab === 'tailor' ? 'border-indigo-500 text-white' : 'border-transparent text-slate-400'}`}
+                                            >
+                                                Tailor Profile Summary
+                                            </button>
+                                            <button 
+                                                onClick={() => setAiTab('coverletter')}
+                                                className={`flex-1 pb-2 border-b-2 transition ${aiTab === 'coverletter' ? 'border-indigo-500 text-white' : 'border-transparent text-slate-400'}`}
+                                            >
+                                                Cover Letter
+                                            </button>
+                                            <button 
+                                                onClick={() => setAiTab('interview')}
+                                                className={`flex-1 pb-2 border-b-2 transition ${aiTab === 'interview' ? 'border-indigo-500 text-white' : 'border-transparent text-slate-400'}`}
+                                            >
+                                                Prep Coach
+                                            </button>
+                                        </div>
+
+                                        {/* Dynamic optimizer panels */}
+                                        {aiTab === 'tailor' && (
+                                            <div className="space-y-3">
+                                                <p className="text-[10px] text-slate-400 leading-relaxed">
+                                                    Rewrite and optimize your Executive Summary section dynamically so key credentials are highlighted matching the specific description.
+                                                </p>
+                                                <button 
+                                                    onClick={handleAiTailorProfile}
+                                                    disabled={aiLoading}
+                                                    className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-700 text-white rounded-lg py-2 text-xs font-bold transition flex justify-center items-center gap-1.5"
+                                                >
+                                                    {aiLoading ? "Consulting Gemini..." : "⚡ Optimize Summary"}
+                                                </button>
+                                                {tailorSuccessMsg && (
+                                                    <div className="p-2.5 bg-emerald-950/80 text-emerald-300 border border-emerald-900 rounded text-[10px]">
+                                                        ✓ {tailorSuccessMsg}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {aiTab === 'coverletter' && (
+                                            <div className="space-y-3">
+                                                <p className="text-[10px] text-slate-400 leading-relaxed">
+                                                    Draft a custom cover letter leveraging verified certifications and professional history.
+                                                </p>
+                                                <button 
+                                                    onClick={handleAiGenerateCoverLetter}
+                                                    disabled={aiLoading}
+                                                    className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-700 text-white rounded-lg py-2 text-xs font-bold transition flex justify-center items-center gap-1.5"
+                                                >
+                                                    {aiLoading ? "Generating Letter..." : "✍ Draft Cover Letter"}
+                                                </button>
+                                                {generatedCoverLetter && (
+                                                    <div className="space-y-1.5">
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="text-[8px] text-slate-400 font-bold uppercase tracking-wider">Results</span>
+                                                            <button 
+                                                                onClick={() => {
+                                                                    navigator.clipboard.writeText(generatedCoverLetter);
+                                                                    showToast("Cover letter copied!");
+                                                                }}
+                                                                className="text-[9px] text-indigo-400 hover:underline"
+                                                            >
+                                                                Copy Text
+                                                            </button>
+                                                        </div>
+                                                        <div className="bg-slate-950 text-slate-300 text-[10px] p-2 rounded border border-slate-800 max-h-48 overflow-y-auto whitespace-pre-wrap custom-scroll">
+                                                            {generatedCoverLetter}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {aiTab === 'interview' && (
+                                            <div className="space-y-3">
+                                                <p className="text-[10px] text-slate-400 leading-relaxed">
+                                                    Produce situational, STAR behavioral, and technical evaluation lists based on target requirements and actual experience.
+                                                </p>
+                                                <button 
+                                                    onClick={handleAiGenerateInterviewPrep}
+                                                    disabled={aiLoading}
+                                                    className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-700 text-white rounded-lg py-2 text-xs font-bold transition"
+                                                >
+                                                    {aiLoading ? "Coaching..." : "🧠 Generate Interview Guide"}
+                                                </button>
+                                                {interviewPrep && (
+                                                    <div className="space-y-1.5">
+                                                        <span className="text-[8px] text-slate-400 font-bold uppercase tracking-wider block">Coaching Playbook</span>
+                                                        <div className="bg-slate-950 text-slate-300 text-[10px] p-2 rounded border border-slate-800 max-h-48 overflow-y-auto whitespace-pre-wrap custom-scroll leading-relaxed">
+                                                            {interviewPrep}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {aiError && (
+                                            <div className="p-2.5 bg-rose-950 text-rose-300 border border-rose-900 rounded text-[10px]">
+                                                {aiError}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Printable/exportable standard canvas workspace */}
+                                <div 
+                                    className={`print-page bg-white shadow-xl rounded-2xl overflow-hidden max-w-[210mm] mx-auto min-h-[297mm] relative text-slate-800 border border-slate-200 transition-all duration-300 ${
+                                        showAiPanel ? 'lg:col-span-8' : 'lg:col-span-12'
+                                    }`}
+                                >
+                                    
+                                    {/* SPLIT EXECUTIVE */}
+                                    {layout === 'executive' && (
+                                        <div className="grid grid-cols-1 md:grid-cols-12 min-h-[297mm]">
+                                            {/* Left Meta sidebar details */}
+                                            <div className="md:col-span-4 bg-slate-900 text-slate-100 p-8 flex flex-col justify-between">
+                                                <div>
+                                                    {/* Active Portrait Display */}
+                                                    <div className="flex justify-center mb-6">
+                                                        <div className="w-36 h-44 rounded-xl overflow-hidden border-2 border-slate-700 shadow-md relative bg-slate-800">
+                                                            <img 
+                                                                src={currentPhotoSrc} 
+                                                                alt={profile.name} 
+                                                                className="w-full h-full object-cover" 
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Header Metadata */}
+                                                    <div className="text-center md:text-left mb-6 border-b border-slate-800 pb-5">
+                                                        <h2 className="text-base font-bold tracking-tight text-white mb-1">
+                                                            {isEditing ? (
+                                                                <input 
+                                                                    value={profile.name} 
+                                                                    onChange={(e) => setProfile({...profile, name: e.target.value})}
+                                                                    className="bg-slate-800 text-white rounded px-2 py-0.5 w-full text-xs"
+                                                                />
+                                                            ) : profile.name}
+                                                        </h2>
+                                                        <p className="text-[10px] text-slate-300 leading-relaxed font-semibold uppercase tracking-wider">
+                                                            {isEditing ? (
+                                                                <textarea 
+                                                                    value={profile.title} 
+                                                                    onChange={(e) => setProfile({...profile, title: e.target.value})}
+                                                                    className="bg-slate-800 text-white rounded px-2 py-0.5 w-full text-[10px] resize-none"
+                                                                />
+                                                            ) : profile.title}
+                                                        </p>
+                                                    </div>
+
+                                                    {/* Location details */}
+                                                    <div className="space-y-4 mb-6">
+                                                        <h3 className="text-[10px] font-bold uppercase tracking-wider text-indigo-400">Communication</h3>
+                                                        <div className="text-[10px] space-y-2 text-slate-300">
+                                                            <div className="flex items-center gap-1.5">
+                                                                <span>📧</span>
+                                                                <span className="truncate">{profile.email}</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-1.5">
+                                                                <span>📱</span>
+                                                                <span>{profile.phone1} / {profile.phone2}</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-1.5">
+                                                                <span>📍</span>
+                                                                <span>{profile.location}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Personal Info */}
+                                                    <div className="space-y-3 mb-6">
+                                                        <h3 className="text-[10px] font-bold uppercase tracking-wider text-indigo-400">Bio Profile</h3>
+                                                        <div className="text-[10px] space-y-1 text-slate-300">
+                                                            <div className="flex justify-between border-b border-slate-800 pb-0.5">
+                                                                <span className="text-slate-400">Born:</span>
+                                                                <span>{profile.birthDate}</span>
+                                                            </div>
+                                                            <div className="flex justify-between border-b border-slate-800 pb-0.5">
+                                                                <span className="text-slate-400">Nationality:</span>
+                                                                <span>{profile.nationality}</span>
+                                                            </div>
+                                                            <div className="flex justify-between border-b border-slate-800 pb-0.5">
+                                                                <span className="text-slate-400">Status:</span>
+                                                                <span>{profile.maritalStatus}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Languages */}
+                                                    <div className="space-y-2 mb-6">
+                                                        <h3 className="text-[10px] font-bold uppercase tracking-wider text-indigo-400">Languages</h3>
+                                                        <ul className="text-[10px] text-slate-300 space-y-1">
+                                                            {profile.languages.map((lang, idx) => (
+                                                                <li key={idx} className="flex items-center gap-1.5">
+                                                                    <span className="w-1 h-1 rounded-full bg-indigo-500"></span>
+                                                                    {lang}
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+
+                                                    {/* Licensing */}
+                                                    <div className="space-y-2">
+                                                        <h3 className="text-[10px] font-bold uppercase tracking-wider text-indigo-400">Credentials</h3>
+                                                        <p className="text-[9px] text-slate-300 leading-relaxed bg-slate-800/50 p-2 rounded">
+                                                            {profile.drivingLicense}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="pt-6 border-t border-slate-800">
+                                                    <p className="text-[8px] text-slate-500 text-center">Interactive CV Portal • {new Date().getFullYear()}</p>
+                                                </div>
+                                            </div>
+
+                                            {/* Main right experience pane */}
+                                            <div className="md:col-span-8 p-8 flex flex-col justify-between">
+                                                <div className="space-y-6">
+                                                    {/* Summary */}
+                                                    <div>
+                                                        <h3 className={`text-xs font-bold uppercase tracking-wider ${activeColors.text} mb-2.5 flex items-center gap-1.5`}>
+                                                            <span>🎯 Executive Summary</span>
+                                                        </h3>
+                                                        {isEditing ? (
+                                                            <textarea 
+                                                                value={profile.summary} 
+                                                                onChange={(e) => setProfile({...profile, summary: e.target.value})}
+                                                                className="w-full p-2 border border-slate-300 rounded text-[10px] h-28"
+                                                            />
+                                                        ) : (
+                                                            <p className="text-[11px] text-slate-600 leading-relaxed text-justify">
+                                                                {profile.summary}
+                                                            </p>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Experience list */}
+                                                    <div>
+                                                        <h3 className={`text-xs font-bold uppercase tracking-wider ${activeColors.text} mb-3.5 flex items-center gap-1.5 border-b pb-1`}>
+                                                            <span>💼 Career Experiences</span>
+                                                        </h3>
+                                                        <div className="space-y-3">
+                                                            {profile.experience.map((exp, idx) => (
+                                                                <div key={idx} className="relative pl-3 border-l-2 border-slate-100">
+                                                                    <div className="absolute w-2 h-2 rounded-full bg-slate-200 -left-[5px] top-1"></div>
+                                                                    <div className="flex flex-wrap justify-between items-baseline">
+                                                                        <h4 className="text-[11px] font-bold text-slate-800">{exp.role}</h4>
+                                                                        <span className="text-[9px] font-bold text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded">{exp.period}</span>
+                                                                    </div>
+                                                                    <p className="text-[10px] text-indigo-600 font-bold">{exp.org}</p>
+                                                                    <p className="text-[10px] text-slate-500 leading-relaxed">{exp.desc}</p>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Education list */}
+                                                    <div>
+                                                        <h3 className={`text-xs font-bold uppercase tracking-wider ${activeColors.text} mb-3 flex items-center gap-1.5 border-b pb-1`}>
+                                                            <span>🎓 Education & Credentials</span>
+                                                        </h3>
+                                                        <div className="space-y-2">
+                                                            {profile.education.map((edu, idx) => (
+                                                                <div key={idx} className="flex justify-between items-start gap-4">
+                                                                    <div className="w-20 flex-shrink-0 text-[9px] font-bold text-slate-400 pt-0.5">
+                                                                        {edu.period}
+                                                                    </div>
+                                                                    <div className="flex-grow">
+                                                                        <h4 className="text-[10px] font-bold text-slate-800">{edu.degree}</h4>
+                                                                        <p className="text-[10px] text-slate-500 font-semibold">{edu.institution}</p>
+                                                                        {edu.details && <p className="text-[9px] text-slate-400 mt-0.5">{edu.details}</p>}
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Qualifications & Verifications */}
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                                                        <div>
+                                                            <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-2">Qualifications</h3>
+                                                            <ul className="space-y-1 text-[9px] text-slate-600">
+                                                                {profile.qualifications.map((qual, idx) => (
+                                                                    <li key={idx} className="flex items-start gap-1">
+                                                                        <span className="text-indigo-600">✓</span>
+                                                                        <span>{qual}</span>
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        </div>
+                                                        <div>
+                                                            <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-2">Verified Links</h3>
+                                                            <div className="space-y-1">
+                                                                {profile.credentials.slice(0, 4).map((cred, idx) => (
+                                                                    <a 
+                                                                        key={idx} 
+                                                                        href={cred.url} 
+                                                                        target="_blank" 
+                                                                        className="block text-[9px] bg-slate-50 border border-slate-100 rounded p-1 text-indigo-700 font-semibold truncate hover:bg-indigo-50"
+                                                                    >
+                                                                        🔗 {cred.label.replace("Verify: ", "")}
+                                                                    </a>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* MINIMALIST MODERN */}
+                                    {layout === 'modern' && (
+                                        <div className="p-12 space-y-8">
+                                            <div className="flex flex-col md:flex-row gap-6 items-center border-b pb-6">
+                                                <div className="w-28 h-28 rounded-full overflow-hidden border-2 border-slate-200 shadow-sm flex-shrink-0 bg-slate-50">
+                                                    <img src={currentPhotoSrc} alt={profile.name} className="w-full h-full object-cover" />
+                                                </div>
+                                                <div className="text-center md:text-left space-y-1 flex-grow">
+                                                    <h1 className="text-2xl font-bold tracking-tight text-slate-900">{profile.name}</h1>
+                                                    <p className={`text-xs font-extrabold tracking-widest uppercase ${activeColors.text}`}>{profile.title}</p>
+                                                    <div className="flex flex-wrap justify-center md:justify-start gap-3 text-[10px] text-slate-400 pt-1">
+                                                        <span>📧 {profile.email}</span>
+                                                        <span>📱 {profile.phone1}</span>
+                                                        <span>📍 {profile.location}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <h2 className={`text-[10px] font-extrabold uppercase tracking-widest ${activeColors.text} mb-2`}>Executive Profile</h2>
+                                                <p className="text-[10px] text-slate-600 leading-relaxed text-justify">{profile.summary}</p>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                                <div className="md:col-span-2 space-y-6">
+                                                    <div>
+                                                        <h2 className="text-[10px] font-extrabold uppercase tracking-widest text-slate-700 mb-3 border-b pb-0.5">Career Chronology</h2>
+                                                        <div className="space-y-3">
+                                                            {profile.experience.map((exp, idx) => (
+                                                                <div key={idx} className="space-y-0.5">
+                                                                    <div className="flex justify-between items-baseline">
+                                                                        <h4 className="text-[10px] font-bold text-slate-800">{exp.role}</h4>
+                                                                        <span className="text-[9px] text-slate-400 font-semibold">{exp.period}</span>
+                                                                    </div>
+                                                                    <p className="text-[9px] text-indigo-600 font-semibold">{exp.org}</p>
+                                                                    <p className="text-[9px] text-slate-500 leading-relaxed">{exp.desc}</p>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
+                                                    <div>
+                                                        <h2 className="text-[10px] font-extrabold uppercase tracking-widest text-slate-700 mb-3 border-b pb-0.5">Academics</h2>
+                                                        <div className="space-y-2">
+                                                            {profile.education.map((edu, idx) => (
+                                                                <div key={idx} className="space-y-0.5">
+                                                                    <div className="flex justify-between">
+                                                                        <h4 className="text-[10px] font-bold text-slate-800">{edu.degree}</h4>
+                                                                        <span className="text-[9px] text-slate-400">{edu.period}</span>
+                                                                    </div>
+                                                                    <p className="text-[9px] text-slate-400 font-semibold">{edu.institution} {edu.details && `• ${edu.details}`}</p>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-6">
+                                                    <div>
+                                                        <h2 className="text-[10px] font-extrabold uppercase tracking-widest text-slate-700 mb-2.5 border-b pb-0.5">Certificates</h2>
+                                                        <ul className="space-y-1">
+                                                            {profile.qualifications.map((qual, idx) => (
+                                                                <li key={idx} className="text-[9px] text-slate-500 flex items-center gap-1">
+                                                                    <span className="w-1 h-1 rounded-full bg-slate-400"></span>
+                                                                    {qual}
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+
+                                                    <div>
+                                                        <h2 className="text-[10px] font-extrabold uppercase tracking-widest text-slate-700 mb-2.5 border-b pb-0.5">Verified Badges</h2>
+                                                        <div className="space-y-1">
+                                                            {profile.credentials.map((cred, idx) => (
+                                                                <a 
+                                                                    key={idx} 
+                                                                    href={cred.url} 
+                                                                    target="_blank" 
+                                                                    className="block text-[9px] bg-slate-50 border p-1 rounded text-slate-600 truncate hover:text-indigo-600"
+                                                                >
+                                                                    🔗 {cred.label.replace("Verify: ", "")}
+                                                                </a>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {}
+                    {activeTab === 'ai-chat' && (
+                        <div className="max-w-4xl mx-auto space-y-6 animate-fadeIn">
+                            <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                                <div className="bg-slate-900 text-white p-6 flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-indigo-400">
+                                            <img src="photo_2026-07-16_08-42-35.jpg" alt="Miliyion Avatar" className="w-full h-full object-cover" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-sm font-bold tracking-wide">Miliyion's AI Recruiter Avatar</h3>
+                                            <span className="inline-flex items-center gap-1 text-[10px] text-indigo-300 font-bold uppercase tracking-wider">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-ping"></span> Live & Powered by Gemini
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <span className="text-xs text-slate-400 hidden sm:block">Ask about Exit Exams, TVET levels, or project details!</span>
+                                </div>
+
+                                {/* Chat workspace container */}
+                                <div className="h-96 overflow-y-auto p-6 bg-slate-50/50 space-y-4 custom-scroll">
+                                    {chatMessages.map((msg, idx) => (
+                                        <div key={idx} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                            <div className={`max-w-xl rounded-2xl p-4 text-xs leading-relaxed ${
+                                                msg.sender === 'user' 
+                                                    ? 'bg-indigo-600 text-white shadow-md' 
+                                                    : 'bg-white text-slate-800 shadow-sm border border-slate-200/80'
+                                            }`}>
+                                                <p>{msg.text}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {chatLoading && (
+                                        <div className="flex justify-start">
+                                            <div className="bg-white border border-slate-200 rounded-2xl p-4 flex items-center gap-2">
+                                                <div className="flex gap-1">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce delay-100"></div>
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce delay-200"></div>
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce delay-300"></div>
+                                                </div>
+                                                <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Formulating Response...</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                    <div ref={chatEndRef} />
+                                </div>
+
+                                {/* Chat input tools */}
+                                <form onSubmit={handleSendChatMessage} className="p-4 bg-white border-t border-slate-200 flex gap-2">
+                                    <input 
+                                        type="text"
+                                        value={chatInput}
+                                        onChange={(e) => setChatInput(e.target.value)}
+                                        placeholder="Ask: 'What was your Exit Exam score?' or 'Tell me about your TVET certifications...'"
+                                        className="flex-grow border border-slate-200 rounded-xl px-4 py-2 text-xs focus:outline-none focus:border-indigo-500"
+                                        disabled={chatLoading}
+                                    />
+                                    <button 
+                                        type="submit"
+                                        className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white text-xs font-bold px-4 py-2 rounded-xl transition"
+                                        disabled={chatLoading}
+                                    >
+                                        Send
+                                    </button>
+                                </form>
+                            </div>
+
+                            {/* Preset queries */}
+                            <div className="bg-slate-100 rounded-2xl p-4">
+                                <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2.5">Suggested Recruiter Queries</span>
+                                <div className="flex flex-wrap gap-2">
+                                    {[
+                                        "Where did you study Computer Science?",
+                                        "What was your MoE Exit Exam score?",
+                                        "Describe your network experience at Entoto TVET.",
+                                        "Show me your driving license capabilities.",
+                                        "Tell me about your work at the Driver & Vehicle Licensing Authority."
+                                    ].map((q, idx) => (
+                                        <button 
+                                            key={idx}
+                                            onClick={() => {
+                                                setChatInput(q);
+                                            }}
+                                            className="bg-white hover:bg-indigo-50 border border-slate-200 rounded-xl px-3 py-1.5 text-[10px] font-bold text-slate-700 transition"
+                                        >
+                                            💡 {q}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {}
+                    {activeTab === 'credentials' && (
+                        <div className="space-y-6 animate-fadeIn">
+                            <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+                                <h3 className="text-sm font-extrabold uppercase tracking-widest text-slate-900 mb-2">Verified Professional Credentials</h3>
+                                <p className="text-xs text-slate-500 mb-6">Miliyion holds multiple verified certifications, exit badges, and technical specialization credentials. Feel free to access the official verify links directly.</p>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {profile.credentials.map((cred, idx) => (
+                                        <div key={idx} className="bg-slate-50 p-4 rounded-2xl border border-slate-200/60 hover:border-indigo-300 transition space-y-3">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xl">🎖️</span>
+                                                <h4 className="text-xs font-bold text-slate-800 truncate">{cred.label.replace("Verify: ", "")}</h4>
+                                            </div>
+                                            <p className="text-[10px] text-slate-400 leading-relaxed">
+                                                Official verified badge detailing credentials in Python programming, automated diagnostics, Android frameworks, or capital market strategies.
+                                            </p>
+                                            <a 
+                                                href={cred.url}
+                                                target="_blank"
+                                                className="inline-flex items-center gap-1 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg px-3 py-1.5 text-[10px] font-bold text-indigo-700 transition w-full justify-center"
+                                            >
+                                                🔗 Access Verification Link
+                                            </a>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'gallery' && (
+                        <div className="space-y-6 animate-fadeIn">
+                            <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+                                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b pb-4 mb-6">
+                                    <div>
+                                        <h3 className="text-sm font-extrabold uppercase tracking-widest text-slate-900">Dynamic Photo Studio</h3>
+                                        <p className="text-xs text-slate-500 mt-0.5">Browse through Miliyion's graduation, studio suit, and casual portraits. Select any to make it the default CV avatar!</p>
+                                    </div>
+                                    <label className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-4 py-2 rounded-xl cursor-pointer transition">
+                                        📤 Upload Custom Portrait
+                                        <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
+                                    </label>
+                                </div>
+
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+                                    {GALLERY_PHOTOS.map((photo) => (
+                                        <div 
+                                            key={photo.id}
+                                            className={`group relative rounded-2xl overflow-hidden border-2 aspect-[4/5] bg-slate-100 transition-all duration-300 ${
+                                                selectedPhoto === photo.src && !customPhoto 
+                                                    ? 'border-indigo-600 ring-4 ring-indigo-100' 
+                                                    : 'border-slate-200 hover:border-slate-300'
+                                            }`}
+                                        >
+                                            <img src={photo.src} alt={photo.label} className="w-full h-full object-cover" />
+                                            
+                                            {/* Action overlay mask */}
+                                            <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition duration-200 flex flex-col justify-between p-3 text-center">
+                                                <span className="text-[9px] bg-indigo-600 text-white font-bold uppercase tracking-wider rounded px-1.5 py-0.5 align-self-start self-start">
+                                                    {photo.category}
+                                                </span>
+                                                <div className="space-y-1.5">
+                                                    <p className="text-[10px] text-white font-bold leading-tight truncate">{photo.label}</p>
+                                                    <button 
+                                                        onClick={() => {
+                                                            setCustomPhoto(null);
+                                                            setSelectedPhoto(photo.src);
+                                                            showToast("Primary portrait changed successfully!");
+                                                        }}
+                                                        className="bg-white text-slate-950 font-bold text-[9px] px-2.5 py-1 rounded shadow hover:bg-slate-100 w-full"
+                                                    >
+                                                        Use on Resume
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </main>
+
+                {/* Footer block */}
+                <footer className="bg-slate-950 text-slate-500 py-6 border-t border-slate-900 text-center text-xs no-print">
+                    <p>© {new Date().getFullYear()} Miliyion Addisu Belay. All Rights Reserved.</p>
+                    <p className="text-[10px] text-slate-600 mt-1">Designed as a high-fidelity web customizer & recruitment co-pilot.</p>
+                </footer>
+            </div>
+        );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+</script>
+</body>
+</html>
